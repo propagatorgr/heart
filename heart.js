@@ -8,13 +8,12 @@ let soundCheckbox;
 let repairButton;
 
 // ==========================
-// ΜΕΤΑΒΛΗΤΕΣ ΚΑΡΔΙΑΣ
+// ΚΑΡΔΙΑ
 // ==========================
 let bpm = 70;
 let beatInterval;
 let lastBeatTime = 0;
 let lastIntervalMs = 0;
-
 let heartScale = 1;
 
 let arrhythmia = false;
@@ -26,6 +25,7 @@ let dangerous = false;
 // ΗΧΟΣ
 // ==========================
 let osc;
+let audioEnabled = false;
 
 // ==========================
 // ΗΚΓ
@@ -33,6 +33,17 @@ let osc;
 let ecg = [];
 let ecgMaxPoints = 360;
 let ecgY = 360;
+
+// ==========================
+// ΕΝΕΡΓΟΠΟΙΗΣΗ ΗΧΟΥ (CRITICAL)
+// ==========================
+function enableAudio() {
+  if (!audioEnabled) {
+    userStartAudio();
+    audioEnabled = true;
+    console.log("✅ Audio enabled");
+  }
+}
 
 function setup() {
   createCanvas(600, 520);
@@ -43,17 +54,20 @@ function setup() {
 
   arrhythmiaCheckbox = createCheckbox(" Αρρυθμία", false);
   arrhythmiaCheckbox.position(20, 55);
+  arrhythmiaCheckbox.changed(enableAudio);
 
   tachycardiaCheckbox = createCheckbox(" Ταχυκαρδία", false);
   tachycardiaCheckbox.position(20, 80);
+  tachycardiaCheckbox.changed(enableAudio);
 
   soundCheckbox = createCheckbox(" Ήχος καρδιάς", true);
   soundCheckbox.position(20, 105);
+  soundCheckbox.changed(enableAudio);
 
   repairButton = createButton("🔄 Επανόρθωση ρυθμού");
   repairButton.position(20, 135);
   repairButton.mousePressed(repair);
-  repairButton.attribute("disabled", ""); // αρχικά ανενεργό
+  repairButton.attribute("disabled", "");
 
   osc = new p5.Oscillator("sine");
   osc.freq(80);
@@ -64,33 +78,19 @@ function setup() {
 function draw() {
   background(dangerous ? color(70, 0, 0) : 245);
 
-  // --------------------------
-  // ΚΑΤΑΣΤΑΣΕΙΣ
-  // --------------------------
   arrhythmia = arrhythmiaCheckbox.checked();
   tachycardia = tachycardiaCheckbox.checked();
   soundOn = soundCheckbox.checked();
 
-  // --------------------------
-  // ΚΑΡΔΙΑΚΟΣ ΡΥΘΜΟΣ
-  // --------------------------
-  if (tachycardia) {
-    bpm = 150;
-  } else {
-    bpm = bpmSlider.value();
-  }
-
+  bpm = tachycardia ? 150 : bpmSlider.value();
   beatInterval = 60000 / bpm;
+
   let now = millis();
+  let interval = arrhythmia
+    ? beatInterval * random(0.65, 1.35)
+    : beatInterval;
 
-  let interval = beatInterval;
-  if (arrhythmia) {
-    interval = beatInterval * random(0.65, 1.35);
-  }
-
-  // --------------------------
-  // ΠΑΛΜΟΣ (RR σωστό)
-  // --------------------------
+  // -------- ΠΑΛΜΟΣ --------
   if (now - lastBeatTime > interval) {
     heartScale = 1.3;
 
@@ -100,15 +100,13 @@ function draw() {
 
     lastBeatTime = now;
 
-    if (soundOn && !dangerous) playBeatSound();
+    if (soundOn && audioEnabled && !dangerous) playBeatSound();
     addECGSpike();
   }
 
   heartScale = lerp(heartScale, 1, 0.15);
 
-  // --------------------------
-  // ΕΠΙΚΙΝΔΥΝΟΤΗΤΑ
-  // --------------------------
+  // -------- ΕΠΙΚΙΝΔΥΝΟΤΗΤΑ --------
   dangerous =
     arrhythmia &&
     tachycardia &&
@@ -116,27 +114,21 @@ function draw() {
     lastIntervalMs > 0 &&
     lastIntervalMs < 420;
 
-  // ✅ ΕΝΕΡΓΟΠΟΙΗΣΗ / ΑΠΕΝΕΡΓΟΠΟΙΗΣΗ ΚΟΥΜΠΙΟΥ
+  // κουμπί επανόρθωσης μόνο σε danger
   if (dangerous) {
     repairButton.removeAttribute("disabled");
   } else {
     repairButton.attribute("disabled", "");
   }
 
-  // --------------------------
-  // ΚΑΡΔΙΑ
-  // --------------------------
+  // -------- ΚΑΡΔΙΑ --------
   translate(width / 2, 230);
   scale(heartScale);
-
   noStroke();
-  if (dangerous) {
-    fill(120, 0, 0);
-  } else if (arrhythmia) {
-    fill(200 + random(-30, 30), 0, 0);
-  } else {
-    fill(220, 0, 0);
-  }
+
+  if (dangerous) fill(120, 0, 0);
+  else if (arrhythmia) fill(200 + random(-30, 30), 0, 0);
+  else fill(220, 0, 0);
 
   ellipse(-20, 0, 80, 80);
   ellipse(20, 0, 80, 80);
@@ -144,71 +136,45 @@ function draw() {
 
   resetMatrix();
 
-  // --------------------------
-  // ΠΛΗΡΟΦΟΡΙΕΣ
-  // --------------------------
+  // -------- ΠΛΗΡΟΦΟΡΙΕΣ --------
   fill(0);
   textSize(14);
   text(`Καρδιακός ρυθμός: ${bpm} bpm`, 20, 175);
   text(
-    `RR διάστημα: ${
-      lastIntervalMs > 0 ? Math.round(lastIntervalMs) + " ms" : "-"
-    }`,
+    `RR διάστημα: ${lastIntervalMs > 0 ? Math.round(lastIntervalMs) + " ms" : "-"}`,
     20,
     200
   );
 
   textSize(16);
-  if (dangerous) {
-    fill("red");
-    text("🚨 Ανεπαρκής άντληση αίματος", 20, 235);
-  } else if (arrhythmia && tachycardia) {
-    fill("orange");
-    text("Ταχυκαρδία + Αρρυθμία", 20, 235);
-  } else if (arrhythmia) {
-    fill("red");
-    text("Αρρυθμία", 20, 235);
-  } else if (tachycardia) {
-    fill("orange");
-    text("Ταχυκαρδία", 20, 235);
-  } else {
-    fill("green");
-    text("Φυσιολογικός ρυθμός", 20, 235);
-  }
+  if (dangerous) fill("red"), text("🚨 Ανεπαρκής άντληση αίματος", 20, 235);
+  else if (arrhythmia && tachycardia) fill("orange"), text("Ταχυκαρδία + Αρρυθμία", 20, 235);
+  else if (arrhythmia) fill("red"), text("Αρρυθμία", 20, 235);
+  else if (tachycardia) fill("orange"), text("Ταχυκαρδία", 20, 235);
+  else fill("green"), text("Φυσιολογικός ρυθμός", 20, 235);
 
-  // --------------------------
-  // ΗΚΓ
-  // --------------------------
   drawECG();
 
-  // --------------------------
-  // ΜΗΝΥΜΑ ΚΙΝΔΥΝΟΥ
-  // --------------------------
   if (dangerous) {
     fill(150, 0, 0, 200);
     rect(0, height - 60, width, 60);
-
     fill(255);
     textSize(18);
     textAlign(CENTER, CENTER);
-    text(
-      "Η καρδιά ΔΕΝ αντλεί αποτελεσματικά αίμα",
-      width / 2,
-      height - 30
-    );
+    text("Η καρδιά ΔΕΝ αντλεί αποτελεσματικά αίμα", width / 2, height - 30);
     textAlign(LEFT, BASELINE);
   }
 }
 
 // ==========================
-// ΕΠΑΝΟΡΘΩΣΗ (μόνο σε danger)
+// ΕΠΑΝΟΡΘΩΣΗ (user gesture)
 // ==========================
 function repair() {
+  enableAudio();
   if (!dangerous) return;
 
   arrhythmiaCheckbox.checked(false);
   tachycardiaCheckbox.checked(false);
-
   bpmSlider.value(70);
 
   arrhythmia = false;
@@ -243,7 +209,6 @@ function drawECG() {
 
   stroke(0, 180, 0);
   noFill();
-
   beginShape();
   for (let i = 0; i < ecg.length; i++) {
     let x = map(i, 0, ecgMaxPoints, 0, width);
