@@ -261,3 +261,11 @@ function drawECG() {
   stroke(180);
   line(0, ecgY, width, ecgY);
 }
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen();
+  } else {
+    document.exitFullscreen();
+  }
+}
+
