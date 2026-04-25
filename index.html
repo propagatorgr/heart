@@ -3,7 +3,6 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <title>Προσομοίωση Καρδιακού Ρυθμού</title>
 
   <!-- p5 -->
@@ -26,17 +25,15 @@
       font-size: 1.2rem;
     }
 
-    /* ===== MAIN LAYOUT ===== */
     main {
       display: flex;
       gap: 20px;
       padding: 20px;
       justify-content: center;
       align-items: flex-start;
-      flex-wrap: wrap;   /* ← αυτό κάνει το layout responsive */
+      flex-wrap: wrap;
     }
 
-    /* ===== CONTROLS COLUMN ===== */
     #controls {
       min-width: 220px;
       max-width: 260px;
@@ -46,7 +43,18 @@
       box-shadow: 0 0 4px rgba(0,0,0,0.15);
     }
 
-    /* ===== MOBILE ===== */
+    canvas {
+      background: white;
+      border: 1px solid #ccc;
+    }
+
+    footer {
+      text-align: center;
+      font-size: 0.85rem;
+      color: #555;
+      padding: 10px;
+    }
+
     @media (max-width: 900px) {
       main {
         flex-direction: column;
@@ -58,18 +66,6 @@
         max-width: 400px;
       }
     }
-
-    footer {
-      text-align: center;
-      font-size: 0.85rem;
-      padding: 10px;
-      color: #555;
-    }
-
-    canvas {
-      background: white;
-      border: 1px solid #ccc;
-    }
   </style>
 </head>
 
@@ -78,14 +74,13 @@
     🫀 Προσομοίωση Καρδιακού Ρυθμού
   </header>
 
-  <main id="main">
-    <!-- canvas & controls μπαίνουν εδώ από το sketch.js -->
-  </main>
+  <main id="main"></main>
 
   <footer>
     Εκπαιδευτική εφαρμογή Βιολογίας – p5.js
   </footer>
 
-  <script src="heart.js"></script>
+  <script src="sketch.js"></script>
 </body>
 </html>
+
