@@ -52,36 +52,51 @@ function enableAudio() {
 // SETUP
 // ==========================
 function setup() {
+  // ✅ Ασφαλής εύρεση container
+  let container = select("#main");
+  if (!container) {
+    // fallback για p5 Web Editor
+    container = select("body");
+  }
+
+  // ---- Canvas ----
   let cnv = createCanvas(600, 520);
-  cnv.parent("main");
+  cnv.parent(container);
   cnv.mousePressed(enableAudio);
 
+  // ---- Controls container ----
   controlsDiv = createDiv();
-  controlsDiv.parent("main");
+  controlsDiv.parent(container);
   controlsDiv.style("display", "flex");
   controlsDiv.style("flex-direction", "column");
   controlsDiv.style("gap", "6px");
   controlsDiv.style("margin-left", "20px");
   controlsDiv.style("margin-top", "20px");
 
+  // ---- Slider bpm ----
   bpmSlider = createSlider(40, 160, 70, 1);
   bpmSlider.parent(controlsDiv);
   bpmSlider.style("width", "180px");
 
+  // ---- Αρρυθμία ----
   arrhythmiaCheckbox = createCheckbox(" Αρρυθμία", false);
   arrhythmiaCheckbox.parent(controlsDiv);
 
+  // ---- Ταχυκαρδία ----
   tachycardiaCheckbox = createCheckbox(" Ταχυκαρδία", false);
   tachycardiaCheckbox.parent(controlsDiv);
 
+  // ---- Ήχος καρδιάς ----
   soundCheckbox = createCheckbox(" Ήχος καρδιάς", true);
   soundCheckbox.parent(controlsDiv);
 
+  // ---- Επανόρθωση ----
   repairButton = createButton("🔄 Επανόρθωση ρυθμού");
   repairButton.parent(controlsDiv);
   repairButton.mousePressed(repair);
   repairButton.attribute("disabled", "");
 
+  // ---- Oscillator ----
   osc = new p5.Oscillator("sine");
   osc.freq(80);
   osc.amp(0);
