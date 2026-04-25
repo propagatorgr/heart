@@ -6,6 +6,7 @@ let arrhythmiaCheckbox;
 let tachycardiaCheckbox;
 let soundCheckbox;
 let repairButton;
+let fullscreenButton;
 let controlsDiv;
 
 // ==========================
@@ -41,63 +42,70 @@ let ecgY = 360;
 function enableAudio() {
   if (!audioEnabled) {
     userStartAudio();
-    const ctx = getAudioContext();
-    if (ctx.state !== "running") ctx.resume();
+    getAudioContext().resume();
     audioEnabled = true;
-    console.log("✅ Audio unlocked");
   }
 }
+
+// ==========================
+// FULLSCREEN
+// ==========================
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen();
+  } else {
+    document.exitFullscreen();
+  }
+}
+
+document.addEventListener("fullscreenchange", () => {
+  if (document.fullscreenElement) {
+    fullscreenButton.html("⛶ Έξοδος από πλήρη οθόνη");
+  } else {
+    fullscreenButton.html("⛶ Πλήρης οθόνη");
+  }
+});
 
 // ==========================
 // SETUP
 // ==========================
 function setup() {
-  // ✅ Ασφαλής εύρεση container
   let container = select("#main");
-  if (!container) {
-    // fallback για p5 Web Editor
-    container = select("body");
-  }
+  if (!container) container = select("body");
 
-  // ---- Canvas ----
   let cnv = createCanvas(600, 520);
   cnv.parent(container);
   cnv.mousePressed(enableAudio);
 
-  // ---- Controls container ----
   controlsDiv = createDiv();
   controlsDiv.parent(container);
   controlsDiv.attribute("id", "controls");
   controlsDiv.style("display", "flex");
   controlsDiv.style("flex-direction", "column");
-  controlsDiv.style("gap", "6px");
-  controlsDiv.style("margin-left", "20px");
-  controlsDiv.style("margin-top", "20px");
+  controlsDiv.style("gap", "8px");
 
-  // ---- Slider bpm ----
   bpmSlider = createSlider(40, 160, 70, 1);
   bpmSlider.parent(controlsDiv);
-  bpmSlider.style("width", "180px");
 
-  // ---- Αρρυθμία ----
   arrhythmiaCheckbox = createCheckbox(" Αρρυθμία", false);
   arrhythmiaCheckbox.parent(controlsDiv);
 
-  // ---- Ταχυκαρδία ----
   tachycardiaCheckbox = createCheckbox(" Ταχυκαρδία", false);
   tachycardiaCheckbox.parent(controlsDiv);
 
-  // ---- Ήχος καρδιάς ----
   soundCheckbox = createCheckbox(" Ήχος καρδιάς", true);
   soundCheckbox.parent(controlsDiv);
 
-  // ---- Επανόρθωση ----
   repairButton = createButton("🔄 Επανόρθωση ρυθμού");
   repairButton.parent(controlsDiv);
-  repairButton.mousePressed(repair);
   repairButton.attribute("disabled", "");
+  repairButton.mousePressed(repair);
 
-  // ---- Oscillator ----
+  // ✅ Fullscreen button
+  fullscreenButton = createButton("⛶ Πλήρης οθόνη");
+  fullscreenButton.parent(controlsDiv);
+  fullscreenButton.mousePressed(toggleFullscreen);
+
   osc = new p5.Oscillator("sine");
   osc.freq(80);
   osc.amp(0);
@@ -118,9 +126,8 @@ function draw() {
   beatInterval = 60000 / bpm;
 
   let now = millis();
-  let interval = arrhythmia
-    ? beatInterval * random(0.65, 1.35)
-    : beatInterval;
+  let interval =
+    arrhythmia ? beatInterval * random(0.65, 1.35) : beatInterval;
 
   if (now - lastBeatTime > interval) {
     heartScale = 1.3;
@@ -131,10 +138,7 @@ function draw() {
 
     lastBeatTime = now;
 
-    if (soundOn && audioEnabled && !dangerous) {
-      playBeatSound();
-    }
-
+    if (soundOn && audioEnabled && !dangerous) playBeatSound();
     addECGSpike();
   }
 
@@ -159,9 +163,9 @@ function draw() {
   else if (arrhythmia) fill(200 + random(-30, 30), 0, 0);
   else fill(220, 0, 0);
 
-  ellipse(-20, 0, 80, 80);
-  ellipse(20, 0, 80, 80);
-  triangle(-60, 0, 60, 0, 0, 80);
+  ellipse(-20, -10, 80, 80);
+  ellipse(20, -10, 80, 80);
+  triangle(-60, -5, 60, -5, 0, 80);
   resetMatrix();
 
   // ---------- ΚΕΙΜΕΝΟ ----------
@@ -177,21 +181,22 @@ function draw() {
   );
 
   textSize(16);
-  if (dangerous)
-    fill("red"),
-      text("🚨 Ανεπαρκής άντληση αίματος", 20, 235);
-  else if (arrhythmia && tachycardia)
-    fill("orange"),
-      text("Ταχυκαρδία + Αρρυθμία", 20, 235);
-  else if (arrhythmia)
-    fill("red"),
-      text("Αρρυθμία", 20, 235);
-  else if (tachycardia)
-    fill("orange"),
-      text("Ταχυκαρδία", 20, 235);
-  else
-    fill("green"),
-      text("Φυσιολογικός ρυθμός", 20, 235);
+  if (dangerous) {
+    fill("red");
+    text("🚨 Ανεπαρκής άντληση αίματος", 20, 235);
+  } else if (arrhythmia && tachycardia) {
+    fill("orange");
+    text("Ταχυκαρδία + Αρρυθμία", 20, 235);
+  } else if (arrhythmia) {
+    fill("red");
+    text("Αρρυθμία", 20, 235);
+  } else if (tachycardia) {
+    fill("orange");
+    text("Ταχυκαρδία", 20, 235);
+  } else {
+    fill("green");
+    text("Φυσιολογικός ρυθμός", 20, 235);
+  }
 
   drawECG();
 
@@ -260,12 +265,5 @@ function drawECG() {
 
   stroke(180);
   line(0, ecgY, width, ecgY);
-}
-function toggleFullscreen() {
-  if (!document.fullscreenElement) {
-    document.documentElement.requestFullscreen();
-  } else {
-    document.exitFullscreen();
-  }
 }
 
