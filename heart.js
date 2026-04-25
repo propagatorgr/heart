@@ -6,6 +6,7 @@ let arrhythmiaCheckbox;
 let tachycardiaCheckbox;
 let soundCheckbox;
 let repairButton;
+let controlsDiv;
 
 // ==========================
 // ΚΑΡΔΙΑ
@@ -35,7 +36,7 @@ let ecgMaxPoints = 360;
 let ecgY = 360;
 
 // ==========================
-// ΕΝΕΡΓΟΠΟΙΗΣΗ ΗΧΟΥ (ΜΟΝΟ ΜΕ ΚΛΙΚ)
+// ΕΝΕΡΓΟΠΟΙΗΣΗ ΗΧΟΥ
 // ==========================
 function enableAudio() {
   if (!audioEnabled) {
@@ -48,29 +49,40 @@ function enableAudio() {
 }
 
 function setup() {
-  // ✅ canvas με ρητό user gesture
+  // ---- Canvas ----
   let cnv = createCanvas(600, 520);
-  cnv.parent(document.querySelector("main"));
+  cnv.parent("main");
   cnv.mousePressed(enableAudio);
 
+  // ---- Controls container ----
+  controlsDiv = createDiv();
+  controlsDiv.parent("main");
+  controlsDiv.style("display", "flex");
+  controlsDiv.style("flex-direction", "column");
+  controlsDiv.style("gap", "6px");
+  controlsDiv.style("margin-left", "20px");
+  controlsDiv.style("margin-top", "20px");
+
+  // ---- Controls ----
   bpmSlider = createSlider(40, 160, 70, 1);
-  bpmSlider.position(20, 20);
-  bpmSlider.style("width", "170px");
+  bpmSlider.parent(controlsDiv);
+  bpmSlider.style("width", "180px");
 
   arrhythmiaCheckbox = createCheckbox(" Αρρυθμία", false);
-  arrhythmiaCheckbox.position(20, 55);
+  arrhythmiaCheckbox.parent(controlsDiv);
 
   tachycardiaCheckbox = createCheckbox(" Ταχυκαρδία", false);
-  tachycardiaCheckbox.position(20, 80);
+  tachycardiaCheckbox.parent(controlsDiv);
 
   soundCheckbox = createCheckbox(" Ήχος καρδιάς", true);
-  soundCheckbox.position(20, 105);
+  soundCheckbox.parent(controlsDiv);
 
   repairButton = createButton("🔄 Επανόρθωση ρυθμού");
-  repairButton.position(20, 135);
+  repairButton.parent(controlsDiv);
   repairButton.mousePressed(repair);
   repairButton.attribute("disabled", "");
 
+  // ---- Oscillator ----
   osc = new p5.Oscillator("sine");
   osc.freq(80);
   osc.amp(0);
@@ -92,7 +104,7 @@ function draw() {
     ? beatInterval * random(0.65, 1.35)
     : beatInterval;
 
-  // -------- ΠΑΛΜΟΣ --------
+  // ---- ΠΑΛΜΟΣ ----
   if (now - lastBeatTime > interval) {
     heartScale = 1.3;
 
@@ -111,7 +123,7 @@ function draw() {
 
   heartScale = lerp(heartScale, 1, 0.15);
 
-  // -------- ΕΠΙΚΙΝΔΥΝΟΤΗΤΑ --------
+  // ---- ΕΠΙΚΙΝΔΥΝΟΤΗΤΑ ----
   dangerous =
     arrhythmia &&
     tachycardia &&
@@ -119,11 +131,11 @@ function draw() {
     lastIntervalMs > 0 &&
     lastIntervalMs < 420;
 
-  // κουμπί επανόρθωσης μόνο σε danger
+  // κουμπί επανόρθωσης μόνο όταν υπάρχει κίνδυνος
   if (dangerous) repairButton.removeAttribute("disabled");
   else repairButton.attribute("disabled", "");
 
-  // -------- ΚΑΡΔΙΑ --------
+  // ---- ΚΑΡΔΙΑ ----
   translate(width / 2, 230);
   scale(heartScale);
   noStroke();
@@ -137,7 +149,7 @@ function draw() {
   triangle(-60, 0, 60, 0, 0, 80);
   resetMatrix();
 
-  // -------- ΠΛΗΡΟΦΟΡΙΕΣ --------
+  // ---- ΠΛΗΡΟΦΟΡΙΕΣ ----
   fill(0);
   textSize(14);
   text(`Καρδιακός ρυθμός: ${bpm} bpm`, 20, 175);
@@ -185,7 +197,7 @@ function repair() {
 }
 
 // ==========================
-// ΗΧΟΣ ΚΑΡΔΙΑΣ
+// ΗΧΟΣ
 // ==========================
 function playBeatSound() {
   osc.freq(80);
@@ -208,4 +220,13 @@ function drawECG() {
   stroke(0, 180, 0);
   noFill();
   beginShape();
+  for (let i = 0; i < ecg.length; i++) {
+    let x = map(i, 0, ecgMaxPoints, 0, width);
+    let y = ecgY + ecg[i] + (arrhythmia ? random(-4, 4) : 0);
+    vertex(x, y);
+  }
+  endShape();
 
+  stroke(180);
+  line(0, ecgY, width, ecgY);
+}
