@@ -36,25 +36,26 @@ let ecgMaxPoints = 360;
 let ecgY = 360;
 
 // ==========================
-// ΕΝΕΡΓΟΠΟΙΗΣΗ ΗΧΟΥ
+// AUDIO UNLOCK
 // ==========================
 function enableAudio() {
   if (!audioEnabled) {
     userStartAudio();
-    let ctx = getAudioContext();
+    const ctx = getAudioContext();
     if (ctx.state !== "running") ctx.resume();
     audioEnabled = true;
     console.log("✅ Audio unlocked");
   }
 }
 
+// ==========================
+// SETUP
+// ==========================
 function setup() {
-  // ---- Canvas ----
   let cnv = createCanvas(600, 520);
   cnv.parent("main");
   cnv.mousePressed(enableAudio);
 
-  // ---- Controls container ----
   controlsDiv = createDiv();
   controlsDiv.parent("main");
   controlsDiv.style("display", "flex");
@@ -63,7 +64,6 @@ function setup() {
   controlsDiv.style("margin-left", "20px");
   controlsDiv.style("margin-top", "20px");
 
-  // ---- Controls ----
   bpmSlider = createSlider(40, 160, 70, 1);
   bpmSlider.parent(controlsDiv);
   bpmSlider.style("width", "180px");
@@ -82,13 +82,15 @@ function setup() {
   repairButton.mousePressed(repair);
   repairButton.attribute("disabled", "");
 
-  // ---- Oscillator ----
   osc = new p5.Oscillator("sine");
   osc.freq(80);
   osc.amp(0);
   osc.start();
 }
 
+// ==========================
+// DRAW
+// ==========================
 function draw() {
   background(dangerous ? color(70, 0, 0) : 245);
 
@@ -104,7 +106,6 @@ function draw() {
     ? beatInterval * random(0.65, 1.35)
     : beatInterval;
 
-  // ---- ΠΑΛΜΟΣ ----
   if (now - lastBeatTime > interval) {
     heartScale = 1.3;
 
@@ -123,7 +124,6 @@ function draw() {
 
   heartScale = lerp(heartScale, 1, 0.15);
 
-  // ---- ΕΠΙΚΙΝΔΥΝΟΤΗΤΑ ----
   dangerous =
     arrhythmia &&
     tachycardia &&
@@ -131,11 +131,10 @@ function draw() {
     lastIntervalMs > 0 &&
     lastIntervalMs < 420;
 
-  // κουμπί επανόρθωσης μόνο όταν υπάρχει κίνδυνος
   if (dangerous) repairButton.removeAttribute("disabled");
   else repairButton.attribute("disabled", "");
 
-  // ---- ΚΑΡΔΙΑ ----
+  // ---------- ΚΑΡΔΙΑ ----------
   translate(width / 2, 230);
   scale(heartScale);
   noStroke();
@@ -149,22 +148,34 @@ function draw() {
   triangle(-60, 0, 60, 0, 0, 80);
   resetMatrix();
 
-  // ---- ΠΛΗΡΟΦΟΡΙΕΣ ----
+  // ---------- ΚΕΙΜΕΝΟ ----------
   fill(0);
   textSize(14);
   text(`Καρδιακός ρυθμός: ${bpm} bpm`, 20, 175);
   text(
-    `RR διάστημα: ${lastIntervalMs > 0 ? Math.round(lastIntervalMs) + " ms" : "-"}`,
+    `RR διάστημα: ${
+      lastIntervalMs > 0 ? Math.round(lastIntervalMs) + " ms" : "-"
+    }`,
     20,
     200
   );
 
   textSize(16);
-  if (dangerous) fill("red"), text("🚨 Ανεπαρκής άντληση αίματος", 20, 235);
-  else if (arrhythmia && tachycardia) fill("orange"), text("Ταχυκαρδία + Αρρυθμία", 20, 235);
-  else if (arrhythmia) fill("red"), text("Αρρυθμία", 20, 235);
-  else if (tachycardia) fill("orange"), text("Ταχυκαρδία", 20, 235);
-  else fill("green"), text("Φυσιολογικός ρυθμός", 20, 235);
+  if (dangerous)
+    fill("red"),
+      text("🚨 Ανεπαρκής άντληση αίματος", 20, 235);
+  else if (arrhythmia && tachycardia)
+    fill("orange"),
+      text("Ταχυκαρδία + Αρρυθμία", 20, 235);
+  else if (arrhythmia)
+    fill("red"),
+      text("Αρρυθμία", 20, 235);
+  else if (tachycardia)
+    fill("orange"),
+      text("Ταχυκαρδία", 20, 235);
+  else
+    fill("green"),
+      text("Φυσιολογικός ρυθμός", 20, 235);
 
   drawECG();
 
@@ -174,7 +185,11 @@ function draw() {
     fill(255);
     textSize(18);
     textAlign(CENTER, CENTER);
-    text("Η καρδιά ΔΕΝ αντλεί αποτελεσματικά αίμα", width / 2, height - 30);
+    text(
+      "Η καρδιά ΔΕΝ αντλεί αποτελεσματικά αίμα",
+      width / 2,
+      height - 30
+    );
     textAlign(LEFT, BASELINE);
   }
 }
