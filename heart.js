@@ -66,6 +66,7 @@ function setup() {
 
   // ---- Controls container ----
   controlsDiv = createDiv();
+  controlsDiv.attribute("id", "controls");
   controlsDiv.parent(container);
   controlsDiv.style("display", "flex");
   controlsDiv.style("flex-direction", "column");
