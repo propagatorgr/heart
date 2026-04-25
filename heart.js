@@ -35,18 +35,23 @@ let ecgMaxPoints = 360;
 let ecgY = 360;
 
 // ==========================
-// ΕΝΕΡΓΟΠΟΙΗΣΗ ΗΧΟΥ (CRITICAL)
+// ΕΝΕΡΓΟΠΟΙΗΣΗ ΗΧΟΥ (ΜΟΝΟ ΜΕ ΚΛΙΚ)
 // ==========================
 function enableAudio() {
   if (!audioEnabled) {
     userStartAudio();
+    let ctx = getAudioContext();
+    if (ctx.state !== "running") ctx.resume();
     audioEnabled = true;
-    console.log("✅ Audio enabled");
+    console.log("✅ Audio unlocked");
   }
 }
 
 function setup() {
-  createCanvas(600, 520);
+  // ✅ canvas με ρητό user gesture
+  let cnv = createCanvas(600, 520);
+  cnv.parent(document.querySelector("main"));
+  cnv.mousePressed(enableAudio);
 
   bpmSlider = createSlider(40, 160, 70, 1);
   bpmSlider.position(20, 20);
@@ -54,15 +59,12 @@ function setup() {
 
   arrhythmiaCheckbox = createCheckbox(" Αρρυθμία", false);
   arrhythmiaCheckbox.position(20, 55);
-  arrhythmiaCheckbox.changed(enableAudio);
 
   tachycardiaCheckbox = createCheckbox(" Ταχυκαρδία", false);
   tachycardiaCheckbox.position(20, 80);
-  tachycardiaCheckbox.changed(enableAudio);
 
   soundCheckbox = createCheckbox(" Ήχος καρδιάς", true);
   soundCheckbox.position(20, 105);
-  soundCheckbox.changed(enableAudio);
 
   repairButton = createButton("🔄 Επανόρθωση ρυθμού");
   repairButton.position(20, 135);
@@ -100,7 +102,10 @@ function draw() {
 
     lastBeatTime = now;
 
-    if (soundOn && audioEnabled && !dangerous) playBeatSound();
+    if (soundOn && audioEnabled && !dangerous) {
+      playBeatSound();
+    }
+
     addECGSpike();
   }
 
@@ -115,11 +120,8 @@ function draw() {
     lastIntervalMs < 420;
 
   // κουμπί επανόρθωσης μόνο σε danger
-  if (dangerous) {
-    repairButton.removeAttribute("disabled");
-  } else {
-    repairButton.attribute("disabled", "");
-  }
+  if (dangerous) repairButton.removeAttribute("disabled");
+  else repairButton.attribute("disabled", "");
 
   // -------- ΚΑΡΔΙΑ --------
   translate(width / 2, 230);
@@ -133,7 +135,6 @@ function draw() {
   ellipse(-20, 0, 80, 80);
   ellipse(20, 0, 80, 80);
   triangle(-60, 0, 60, 0, 0, 80);
-
   resetMatrix();
 
   // -------- ΠΛΗΡΟΦΟΡΙΕΣ --------
@@ -167,7 +168,7 @@ function draw() {
 }
 
 // ==========================
-// ΕΠΑΝΟΡΘΩΣΗ (user gesture)
+// ΕΠΑΝΟΡΘΩΣΗ
 // ==========================
 function repair() {
   enableAudio();
@@ -177,17 +178,14 @@ function repair() {
   tachycardiaCheckbox.checked(false);
   bpmSlider.value(70);
 
-  arrhythmia = false;
-  tachycardia = false;
   dangerous = false;
-
   lastIntervalMs = 0;
   lastBeatTime = millis();
   ecg = [];
 }
 
 // ==========================
-// ΗΧΟΣ
+// ΗΧΟΣ ΚΑΡΔΙΑΣ
 // ==========================
 function playBeatSound() {
   osc.freq(80);
@@ -210,13 +208,4 @@ function drawECG() {
   stroke(0, 180, 0);
   noFill();
   beginShape();
-  for (let i = 0; i < ecg.length; i++) {
-    let x = map(i, 0, ecgMaxPoints, 0, width);
-    let y = ecgY + ecg[i] + (arrhythmia ? random(-4, 4) : 0);
-    vertex(x, y);
-  }
-  endShape();
 
-  stroke(180);
-  line(0, ecgY, width, ecgY);
-}
