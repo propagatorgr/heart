@@ -36,6 +36,10 @@ let ecg = [];
 let ecgMaxPoints = 360;
 let ecgY = 360;
 
+// ✅ ΝΕΟ: χρονική δειγματοληψία ΗΚΓ
+let ecgDt = 20;        // ms ανά δείγμα (~50 Hz)
+let lastECGTime = 0;
+
 // ==========================
 // AUDIO UNLOCK
 // ==========================
@@ -101,7 +105,6 @@ function setup() {
   repairButton.attribute("disabled", "");
   repairButton.mousePressed(repair);
 
-  // ✅ Fullscreen button
   fullscreenButton = createButton("⛶ Πλήρης οθόνη");
   fullscreenButton.parent(controlsDiv);
   fullscreenButton.mousePressed(toggleFullscreen);
@@ -246,11 +249,18 @@ function playBeatSound() {
 // ΗΚΓ
 // ==========================
 function addECGSpike() {
-  ecg.push(-35);
+  ecg.push(-35);   // κορυφή R
 }
 
 function drawECG() {
-  ecg.push(0);
+  let now = millis();
+
+  // ✅ Σταθερό χρονικό βήμα ΗΚΓ
+  if (now - lastECGTime >= ecgDt) {
+    ecg.push(0);
+    lastECGTime = now;
+  }
+
   if (ecg.length > ecgMaxPoints) ecg.shift();
 
   stroke(0, 180, 0);
